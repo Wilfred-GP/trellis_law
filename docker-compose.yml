@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  kedro-api-container:
+    build: .
+    image: kedro-document-classifier-api
+    container_name: kedro-api-container
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./notebooks:/app/notebooks
+    ports:
+      - "8000:8000"

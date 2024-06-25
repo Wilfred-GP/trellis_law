@@ -1,0 +1,13 @@
+processed_data:
+  type: pandas.CSVDataSet
+  filepath: data/02_intermediate/processed_data.csv
+  save_args:
+    index: False
+
+model:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/document_classifier.pkl
+
+model_performance_metrics:
+  type: pandas.JSONDataSet
+  filepath: data/08_reporting/model_performance_metrics.json
