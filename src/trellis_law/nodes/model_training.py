@@ -19,14 +19,15 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from .utils import embed_texts  # Import the embed_texts function
 
-def train_and_evaluate_model(model, X_train, X_test, y_train, y_test):
+
+def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, threshold=0.5):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
 
     accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred, average='weighted')
-    recall = recall_score(y_test, y_pred, average='weighted')
-    f1 = f1_score(y_test, y_pred, average='weighted')
+    precision = precision_score(y_test, y_pred, average='weighted', zero_division=1)
+    recall = recall_score(y_test, y_pred, average='weighted', zero_division=1)
+    f1 = f1_score(y_test, y_pred, average='weighted', zero_division=1)
 
     metrics = {
         'accuracy': accuracy,
@@ -44,7 +45,7 @@ def train_and_evaluate_model(model, X_train, X_test, y_train, y_test):
 
     return metrics
 
-def train_lstm_model(X_train, X_test, y_train, y_test, max_words=5000, max_len=100):
+def train_lstm_model(X_train, X_test, y_train, y_test, max_words=5000, max_len=100, threshold=0.5):
     # tokenizer = Tokenizer(num_words=max_words, lower=True)
     # tokenizer.fit_on_texts(X_train)
     # X_train_seq = tokenizer.texts_to_sequences(X_train)
@@ -67,7 +68,12 @@ def train_lstm_model(X_train, X_test, y_train, y_test, max_words=5000, max_len=1
     model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     model.fit(X_train, y_train_enc, epochs=5, batch_size=64, validation_split=0.2, verbose=1)
-    y_pred = np.argmax(model.predict(X_test), axis=1)
+    y_pred_probs = model.predict(X_test)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+
+    # Decode labels back to original categories
+    y_pred = label_encoder.inverse_transform(y_pred)
+    y_test_enc = label_encoder.inverse_transform(y_test_enc)
     
     accuracy = accuracy_score(y_test_enc, y_pred)
     precision = precision_score(y_test_enc, y_pred, average='weighted')
@@ -90,39 +96,39 @@ def train_lstm_model(X_train, X_test, y_train, y_test, max_words=5000, max_len=1
 
     return metrics, model
 
-def train_xgboost_model(X_train, X_test, y_train, y_test):
-    # Encode labels
-    label_encoder = LabelEncoder()
-    y_train_enc = label_encoder.fit_transform(y_train)
-    y_test_enc = label_encoder.transform(y_test)
+# def train_xgboost_model(X_train, X_test, y_train, y_test):
+#     # Encode labels
+#     label_encoder = LabelEncoder()
+#     y_train_enc = label_encoder.fit_transform(y_train)
+#     y_test_enc = label_encoder.transform(y_test)
 
-    model = Pipeline([
-        ('vect', TfidfVectorizer()),
-        ('clf', xgb.XGBClassifier())
-    ])
-    model.fit(X_train, y_train_enc)
-    y_pred = model.predict(X_test)
+#     model = Pipeline([
+#         ('vect', TfidfVectorizer()),
+#         ('clf', xgb.XGBClassifier())
+#     ])
+#     model.fit(X_train, y_train_enc)
+#     y_pred = model.predict(X_test)
 
-    accuracy = accuracy_score(y_test_enc, y_pred)
-    precision = precision_score(y_test_enc, y_pred, average='weighted')
-    recall = recall_score(y_test_enc, y_pred, average='weighted')
-    f1 = f1_score(y_test_enc, y_pred, average='weighted')
+#     accuracy = accuracy_score(y_test_enc, y_pred)
+#     precision = precision_score(y_test_enc, y_pred, average='weighted')
+#     recall = recall_score(y_test_enc, y_pred, average='weighted')
+#     f1 = f1_score(y_test_enc, y_pred, average='weighted')
 
-    metrics = {
-        'accuracy': accuracy,
-        'precision': precision,
-        'recall': recall,
-        'f1_score': f1
-    }
+#     metrics = {
+#         'accuracy': accuracy,
+#         'precision': precision,
+#         'recall': recall,
+#         'f1_score': f1
+#     }
 
-    print(f"XGBoost Model")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1 Score: {f1:.4f}")
-    print(classification_report(y_test_enc, y_pred))
+#     print(f"XGBoost Model")
+#     print(f"Accuracy: {accuracy:.4f}")
+#     print(f"Precision: {precision:.4f}")
+#     print(f"Recall: {recall:.4f}")
+#     print(f"F1 Score: {f1:.4f}")
+#     print(classification_report(y_test_enc, y_pred))
 
-    return metrics, model
+#     return metrics, model
 
 def train_models(data):
     if data.empty:
@@ -139,11 +145,16 @@ def train_models(data):
     X_train_embed = embed_texts(X_train)
     X_test_embed = embed_texts(X_test)
 
+    # Reshape embeddings for LSTM input
+    X_train_embed_lstm = X_train_embed.reshape((X_train_embed.shape[0], 1, X_train_embed.shape[1]))
+    X_test_embed_lstm = X_test_embed.reshape((X_test_embed.shape[0], 1, X_test_embed.shape[1]))
+
     models = {
         'Naive Bayes': Pipeline([('vect', CountVectorizer()), ('clf', MultinomialNB())]),
         'Logistic Regression': Pipeline([('vect', TfidfVectorizer()), ('clf', LogisticRegression(max_iter=1000))]),
-        'SVM': Pipeline([('vect', TfidfVectorizer()), ('clf', SVC(kernel='linear'))]),
-        'Gradient Boosting': Pipeline([('vect', TfidfVectorizer()), ('clf', GradientBoostingClassifier())])
+        'SVM': Pipeline([('vect', TfidfVectorizer()), ('clf', SVC(kernel='linear', probability=True))]),
+        # 'Gradient Boosting': Pipeline([('vect', TfidfVectorizer()), ('clf', GradientBoostingClassifier())]),
+        # 'XGBoost': Pipeline([('vect', TfidfVectorizer()), ('clf', xgb.XGBClassifier())])
     }
 
     performance_metrics = {}
@@ -153,17 +164,14 @@ def train_models(data):
         metrics = train_and_evaluate_model(model, X_train, X_test, y_train, y_test)
         performance_metrics[model_name] = metrics
 
-    # Reshape embeddings for LSTM input
-    X_train_embed_lstm = X_train_embed.reshape((X_train_embed.shape[0], 1, X_train_embed.shape[1]))
-    X_test_embed_lstm = X_test_embed.reshape((X_test_embed.shape[0], 1, X_test_embed.shape[1]))
 
     # Train LSTM model
     lstm_metrics, lstm_model = train_lstm_model(X_train_embed_lstm, X_test_embed_lstm, y_train, y_test)
     performance_metrics['LSTM'] = lstm_metrics
 
-    # Train XGBoost model
-    xgboost_metrics, xgboost_model = train_xgboost_model(X_train, X_test, y_train, y_test)
-    performance_metrics['XGBoost'] = xgboost_metrics
+    # # Train XGBoost model
+    # xgboost_metrics, xgboost_model = train_xgboost_model(X_train, X_test, y_train, y_test)
+    # performance_metrics['XGBoost'] = xgboost_metrics
 
     # Save performance metrics to a JSON file
     metrics_filepath = './data/08_reporting/model_performance_metrics.json'
@@ -175,8 +183,8 @@ def train_models(data):
     best_model_name = max(performance_metrics, key=lambda k: performance_metrics[k]['f1_score'])
     if best_model_name == 'LSTM':
         best_model = lstm_model
-    elif best_model_name == 'XGBoost':
-        best_model = xgboost_model
+    # elif best_model_name == 'XGBoost':
+    #     best_model = xgboost_model
     else:
         best_model = models[best_model_name]
     
