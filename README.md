@@ -1,7 +1,3 @@
-Here's an updated README file reflecting the use of Docker for the entire environment setup and build process, including instructions for the Makefile.
-
----
-
 # TrellisLaw Document Classification
 
 ## Project Overview
