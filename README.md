@@ -96,18 +96,11 @@ trellis_law/
 
 ## Usage
 
-### Data Processing
+### Run Kedro Pipeline
 
-1. **Run Data Preprocessing:**
+1. **Run Project:**
    ```bash
-   make preprocess_data
-   ```
-
-### Model Training and Evaluation
-
-1. **Train Models:**
-   ```bash
-   make train_models
+   make kedro-run
    ```
 
 ### API Deployment
@@ -116,6 +109,8 @@ trellis_law/
    ```bash
    make build
    make run
+   make start-api
+
    ```
 
 2. **Stop Docker Container:**
@@ -124,7 +119,10 @@ trellis_law/
    ```
 
 3. **Test API:**
-   The API can be accessed at `http://localhost:8000/docs` for Swagger UI.
+   curl -X POST "http://localhost:8000/classify_document" -H "Content-Type: text/plain" --data-binary @- << EOF
+{text}
+EOF
+
 
 ## Data Processing
 
@@ -157,5 +155,3 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
-
-Feel free to customize any part of this README to better fit your project specifics and preferences.
