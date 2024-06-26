@@ -1,98 +1,161 @@
-# trellis_law
+Here's an updated README file reflecting the use of Docker for the entire environment setup and build process, including instructions for the Makefile.
 
-## Overview
+---
 
-This is your new Kedro project with Kedro-Viz and PySpark setup, which was generated using `kedro 0.19.6`.
+# TrellisLaw Document Classification
 
-Take a look at the [Kedro documentation](https://docs.kedro.org) to get started.
+## Project Overview
 
-## Rules and guidelines
+This project aims to develop a robust document classification system using machine learning techniques. The system reads and processes text documents from various categories, trains multiple classification models, evaluates their performance, and deploys the best model as an API. The project leverages technologies such as Scikit-Learn, SpaCy, FastAPI, and Docker to ensure scalability, efficiency, and ease of deployment.
 
-In order to get the best out of the template:
+## Table of Contents
 
-* Don't remove any lines from the `.gitignore` file we provide
-* Make sure your results can be reproduced by following a [data engineering convention](https://docs.kedro.org/en/stable/faq/faq.html#what-is-data-engineering-convention)
-* Don't commit data to your repository
-* Don't commit any credentials or your local configuration to your repository. Keep all your credentials and local configuration in `conf/local/`
+1. [Project Overview](#project-overview)
+2. [Folder Structure](#folder-structure)
+3. [Installation](#installation)
+4. [Usage](#usage)
+5. [Data Processing](#data-processing)
+6. [Model Training and Evaluation](#model-training-and-evaluation)
+7. [API Deployment](#api-deployment)
+8. [Contributing](#contributing)
+9. [License](#license)
 
-## How to install dependencies
-
-Declare any dependencies in `requirements.txt` for `pip` installation.
-
-To install them, run:
-
-```
-pip install -r requirements.txt
-```
-
-## How to run your Kedro pipeline
-
-You can run your Kedro project with:
+## Folder Structure
 
 ```
-kedro run
+trellis_law/
+│
+├── data/
+│   ├── 01_raw/
+│   │   └── trellis_assesment_data/
+│   │       ├── food/
+│   │       ├── sport/
+│   │       ├── space/
+│   │       ├── medical/
+│   │       ├── business/
+│   │       ├── politics/
+│   │       ├── graphics/
+│   │       ├── historical/
+│   │       ├── technologie/
+│   │       └── entertainment/
+│   ├── 02_intermediate/
+│   ├── 03_primary/
+│   ├── 04_feature/
+│   ├── 05_model_input/
+│   ├── 06_models/
+│   ├── 07_model_output/
+│   └── 08_reporting/
+│
+├── notebooks/
+│   ├── eda.ipynb
+│   └── eda2.ipynb
+│
+├── src/
+│   ├── trellis_law/
+│   │   ├── __init__.py
+│   │   ├── nodes/
+│   │   │   ├── data_engineering.py
+│   │   │   ├── model_training.py
+│   │   │   └── utils.py
+│   │   ├── pipelines/
+│   │   └── api.py
+│   ├── tests/
+│   ├── pipeline_registry.py
+│   └── settings.py
+│
+├── conf/
+│   ├── base/
+│   │   ├── catalog.yml
+│   │   ├── logging.yml
+│   │   ├── parameters.yml
+│   │   └── spark.yml
+│   ├── local/
+│   │   └── credentials.yml
+│
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── pyproject.toml
+├── requirements.txt
+└── README.md
 ```
 
-## How to test your Kedro project
+## Installation
 
-Have a look at the files `src/tests/test_run.py` and `src/tests/pipelines/data_science/test_pipeline.py` for instructions on how to write your tests. Run the tests as follows:
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/your-username/trellis-law.git
+   cd trellis-law
+   ```
 
-```
-pytest
-```
+2. **Build and Run Docker Container:**
+   ```bash
+   make build
+   make run
+   ```
 
-To configure the coverage threshold, look at the `.coveragerc` file.
+## Usage
 
-## Project dependencies
+### Data Processing
 
-To see and update the dependency requirements for your project use `requirements.txt`. Install the project requirements with `pip install -r requirements.txt`.
+1. **Run Data Preprocessing:**
+   ```bash
+   make preprocess_data
+   ```
 
-[Further information about project dependencies](https://docs.kedro.org/en/stable/kedro_project_setup/dependencies.html#project-specific-dependencies)
+### Model Training and Evaluation
 
-## How to work with Kedro and notebooks
+1. **Train Models:**
+   ```bash
+   make train_models
+   ```
 
-> Note: Using `kedro jupyter` or `kedro ipython` to run your notebook provides these variables in scope: `catalog`, `context`, `pipelines` and `session`.
->
-> Jupyter, JupyterLab, and IPython are already included in the project requirements by default, so once you have run `pip install -r requirements.txt` you will not need to take any extra steps before you use them.
+### API Deployment
 
-### Jupyter
-To use Jupyter notebooks in your Kedro project, you need to install Jupyter:
+1. **Build and Run Docker Container:**
+   ```bash
+   make build
+   make run
+   ```
 
-```
-pip install jupyter
-```
+2. **Stop Docker Container:**
+   ```bash
+   make stop
+   ```
 
-After installing Jupyter, you can start a local notebook server:
+3. **Test API:**
+   The API can be accessed at `http://localhost:8000/docs` for Swagger UI.
 
-```
-kedro jupyter notebook
-```
+## Data Processing
 
-### JupyterLab
-To use JupyterLab, you need to install it:
+The `data_engineering.py` script handles data reading and preprocessing:
+- Reads text files from specified directories.
+- Preprocesses the text by removing stop words, punctuation, and lowercasing.
+- Combines and returns the processed data as a pandas DataFrame.
 
-```
-pip install jupyterlab
-```
+## Model Training and Evaluation
 
-You can also start JupyterLab:
+The `model_training.py` script handles model training and evaluation:
+- Splits the data into training and testing sets.
+- Trains multiple models including Naive Bayes, Logistic Regression, SVM, LSTM, and XGBoost.
+- Evaluates models using metrics like accuracy, precision, recall, and F1-score.
+- Saves the best-performing model.
 
-```
-kedro jupyter lab
-```
+## API Deployment
 
-### IPython
-And if you want to run an IPython session:
+The `api.py` script sets up a FastAPI server:
+- Loads the best-trained model.
+- Provides an endpoint to classify document text.
+- Uses a threshold-based classification to determine if a document should be categorized as 'Other'.
 
-```
-kedro ipython
-```
+## Contributing
 
-### How to ignore notebook output cells in `git`
-To automatically strip out all output cell contents before committing to `git`, you can use tools like [`nbstripout`](https://github.com/kynan/nbstripout). For example, you can add a hook in `.git/config` with `nbstripout --install`. This will run `nbstripout` before anything is committed to `git`.
+Contributions are welcome! Please open an issue or submit a pull request for any changes or improvements.
 
-> *Note:* Your output cells will be retained locally.
+## License
 
-## Package your Kedro project
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-[Further information about building project documentation and packaging your project](https://docs.kedro.org/en/stable/tutorial/package_a_project.html)
+---
+
+Feel free to customize any part of this README to better fit your project specifics and preferences.
