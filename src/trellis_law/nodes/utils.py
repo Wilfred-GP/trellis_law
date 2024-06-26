@@ -33,7 +33,7 @@ def parse_input_text(text: str) -> str:
     """
     return preprocess_text(text)
 
-def predict_with_threshold(model, X: np.ndarray, threshold: float = 0.5) -> np.ndarray:
+def predict_with_threshold(model, X: np.ndarray, threshold: float = 0.30) -> np.ndarray:
     """
     Predicts the class of input samples and applies a threshold to classify uncertain samples as 'Other'.
 
@@ -47,10 +47,11 @@ def predict_with_threshold(model, X: np.ndarray, threshold: float = 0.5) -> np.n
     """
     # Predict probabilities
     probs = model.predict_proba(X)
+    category = model.predict(X)
     max_probs = np.max(probs, axis=1)
     preds = np.argmax(probs, axis=1)
     
     # If max probability is below threshold, classify as 'Other'
-    preds = np.where(max_probs < threshold, 'Other', preds)
+    preds = np.where(max_probs < threshold, 'Other', category)
     
     return preds
