@@ -1,5 +1,6 @@
 import spacy
 import numpy as np
+from .data_engineering import preprocess_text
 
 # Load SpaCy's pre-trained model
 nlp = spacy.load('en_core_web_md')
@@ -11,6 +12,8 @@ def embed_texts(texts):
         embeddings.append(doc.vector)
     return np.array(embeddings)
 
+def parse_input_text(text):
+    return preprocess_text(text)
 
 def predict_with_threshold(model, X, threshold=0.5):
     # Predict probabilities

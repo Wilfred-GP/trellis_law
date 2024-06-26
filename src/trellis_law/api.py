@@ -1,33 +1,26 @@
 # src/document_classification/api.py
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from .nodes.utils import predict_with_threshold
+from fastapi import FastAPI, HTTPException, Request
+from .nodes.utils import predict_with_threshold, parse_input_text
 import joblib
-import numpy as np
 
 app = FastAPI()
 
 # Load the model
 model = joblib.load('./data/06_models/document_classifier.pkl')
 
-# Define request body
-class DocumentRequest(BaseModel):
-    document_text: str
-
-# Define API endpoint
+# Define API endpoint for plain text input
 @app.post("/classify_document")
-def classify_document(request: DocumentRequest):
+async def classify_document(request: Request):
     try:
-        # Get the document text
-        document_text = [request.document_text]
+        raw_text = await request.body()
+        raw_text = raw_text.decode('utf-8')  # Decode bytes to string
         
-        # Check if the model has a predict_proba method
-        if not hasattr(model, "predict_proba"):
-            raise HTTPException(status_code=500, detail="The model does not support probability predictions.")
+        # Preprocess the document text
+        parsed_text = parse_input_text(raw_text)
         
-        # Predict with thresholds
-        category = predict_with_threshold(model, document_text)[0]
+        # Predict with threshold
+        category = predict_with_threshold(model, [parsed_text])[0]
         
         return {"message": "Classification successful", "label": category}
     except Exception as e:
