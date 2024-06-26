@@ -48,7 +48,6 @@ trellis_law/
 │
 ├── notebooks/
 │   ├── eda.ipynb
-│   └── eda2.ipynb
 │
 ├── src/
 │   ├── trellis_law/
