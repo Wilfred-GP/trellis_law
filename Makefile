@@ -49,3 +49,8 @@ rebuild: clean build run
 # Rebuild, run, execute kedro run, and start FastAPI application
 .PHONY: full-build
 full-build: rebuild kedro-run start-api
+
+# Start Kedro Jupyter Notebook inside the running container
+.PHONY: notebook
+notebook:
+	docker-compose exec -it $(DOCKER_CONTAINER_NAME) kedro jupyter notebook --ip 0.0.0.0 --port 8888 --no-browser --allow-root

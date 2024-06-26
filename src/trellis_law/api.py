@@ -9,9 +9,20 @@ app = FastAPI()
 # Load the model
 model = joblib.load('./data/06_models/document_classifier.pkl')
 
-# Define API endpoint for plain text input
 @app.post("/classify_document")
-async def classify_document(request: Request):
+async def classify_document(request: Request) -> dict:
+    """
+    Endpoint to classify a document based on its content.
+
+    Args:
+        request: The request object containing the document text.
+
+    Returns:
+        A dictionary with the classification result.
+
+    Raises:
+        HTTPException: If there is an error during classification.
+    """
     try:
         raw_text = await request.body()
         raw_text = raw_text.decode('utf-8')  # Decode bytes to string
